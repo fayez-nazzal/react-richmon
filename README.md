@@ -8,7 +8,7 @@ Here's a [Demo](https://codesandbox.io/s/flamboyant-hoover-9xtvm?file=/src/App.j
 ## Install
 
 ```bash
-npm install --save richmon
+npm install --save react-richmon
 ```
 
 ## Getting started
