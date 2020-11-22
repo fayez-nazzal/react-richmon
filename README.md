@@ -26,7 +26,10 @@ export default () => {
       content={content}
       onChange={setContent}
       tools={[
-        'BIUS',
+        'B',
+        'I',
+        'U',
+        'S',
         'thin-seperator',
         'sub',
         'sup',
