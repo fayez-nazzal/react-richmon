@@ -3,7 +3,7 @@
 > Richmon is a new rich text editor for React that is very easy to use and customize, it's currently on the alpha release - new features are listed to be added in future releases.
 
 ## Demo
-Here's a ['Demo'](https://codesandbox.io/s/flamboyant-hoover-9xtvm?file=/src/App.js) at CodeSandbox.
+Here's a [Demo](https://codesandbox.io/s/flamboyant-hoover-9xtvm?file=/src/App.js) at CodeSandbox.
 
 ## Install
 
