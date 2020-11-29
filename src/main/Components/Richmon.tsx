@@ -69,6 +69,8 @@ interface RichmonPropTypes {
   defaultFeaturedTextShadowColors: string[]
   defaultFeaturedTextHighlightColorsCss: string[]
   defaultBasicTextShadowColorsCss: string[]
+  toolbarDir: string
+  editorDir: string
 }
 
 type RichmonState = {
@@ -113,8 +115,10 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
         outline: 2px solid #e3e3e3;
       }
     `,
+    toolbarDir: 'rtl',
+    editorDir: 'rtl',
     defaultColorRichMenuCss: '',
-    disableSmootCaret: false,
+    disableSmootCaret: true,
     defaultBasicTextColorsRows: 5,
     defaultBasicTextColorsCols: 6,
     defaultBasicTextHighlightColorsRows: 3,
@@ -267,13 +271,22 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
     }
   }
 
-  shouldComponentUpdate(prevProps: any, prevState: any) {
+  shouldComponentUpdate(prevProps: RichmonPropTypes, prevState: RichmonState) {
     return (
-      !isEqual({ ...prevProps, content: '' }, { ...this.props, content: '' }) ||
       !isEqual(
-        { ...prevState, isCaretHidden: false },
-        { ...this.state, isCaretHidden: false }
-      )
+        {
+          width: prevProps.width,
+          height: prevProps.height,
+          css: prevProps.css,
+          onChange: prevProps.onChange
+        },
+        {
+          width: this.props.width,
+          height: this.props.height,
+          css: this.props.css,
+          onChange: this.props.onChange
+        }
+      ) || !isEqual(prevState, this.state)
     )
   }
 
@@ -602,6 +615,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
           tools={this.state.tools}
           width={this.props.width}
           css={this.props.toolbarCss}
+          dir={this.props.toolbarDir}
         />
         <EditorWrapper
           caretDelay={this.props.caretDelay}
@@ -617,6 +631,7 @@ class Richmon extends React.Component<RichmonPropTypes, RichmonState> {
           disableSmoothCaret={this.props.disableSmootCaret}
           caretColor={this.props.caretColor}
           css={this.props.editorCss}
+          dir={this.props.editorDir}
         />
       </Div>
     )

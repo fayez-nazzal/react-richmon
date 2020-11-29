@@ -97,7 +97,6 @@ class RichMenu extends React.Component<RichMenuPropTypes, RichMenuState> {
   }
 
   componentDidMount() {
-    console.log(this.props.actionButtonCss)
     document.addEventListener('mousedown', this.handleClickOutside)
   }
 

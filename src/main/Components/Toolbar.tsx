@@ -20,7 +20,7 @@ class Toolbar extends React.Component<any> {
 
   render() {
     return (
-      <Div width={this.props.width} css={this.props.css}>
+      <Div dir={this.props.dir} width={this.props.width} css={this.props.css}>
         {this.props.tools.map((tool: JSX.Element, index: number) =>
           React.cloneElement(tool, { key: `tool-${index}` })
         )}

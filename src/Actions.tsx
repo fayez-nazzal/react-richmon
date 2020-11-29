@@ -52,6 +52,9 @@ export interface ActionTypes {
   insertOList: {
     (styleType?: orderedListTypes): void
   }
+  focusEditor: { (): void }
+  setEditorContent: { (html: string): void }
+  getEditorFirstLineText: { (): string }
 }
 
 const insertTable = (
@@ -168,6 +171,18 @@ const insertUListWithStyleImages = (url: string, padding = '0 18px') => {
   )
 }
 
+const focusEditor = () => {
+  Editor.getInstance().selfRef.current.focus()
+}
+
+const setEditorContent = (html: string) => {
+  Editor.getInstance().setHTML(html)
+}
+
+const getEditorFirstLineText = () => {
+  return Editor.getInstance().getFirstLineText()
+}
+
 export const Actions: ActionTypes = {
   setCss,
   setTextShadow,
@@ -186,5 +201,8 @@ export const Actions: ActionTypes = {
   setSup,
   insertOList,
   insertUList,
-  insertUListWithStyleImages
+  insertUListWithStyleImages,
+  focusEditor,
+  setEditorContent,
+  getEditorFirstLineText
 }

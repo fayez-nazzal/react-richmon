@@ -34,8 +34,9 @@ export interface EditorProps {
   height: string
   padding: string
   caretColor: string
-  css: string
   fontSizeMenu: any
+  dir: string
+  css: string
 }
 
 interface StyledContentEditableProps {
@@ -114,25 +115,21 @@ class Editor extends React.Component<EditorProps> {
   }
 
   componentDidMount() {
-    this.init()
+    this.props.html === '' && this.init()
   }
 
   init = () => {
-    if (this.props.html.includes('<')) {
-      throw new Error(
-        'Providing initial html content is not yet supported, please provide just text or empty string.'
-      )
-    } else this.selfRef.current.innerHTML = '<div></div>'
-
-    const selfElem = this.selfRef.current as Element
-    this.currentDiv = selfElem.children[0] as HTMLElement
+    this.currentDiv && this.currentDiv.remove()
+    this.selfRef.current.innerHTML = '<div></div>'
+    this.currentDiv = this.selfRef.current.children[0] as HTMLElement
     this.currentChild = createNewElement('span')
-    this.currentChild.innerText = this.props.html ? this.props.html : '\u200b'
+    this.currentChild.innerText = '\u200b'
     this.currentDiv.append(this.currentChild)
     this.currentChild.setAttribute('style', this.defaultCss)
     this.setCaretHeight(this.currentChild.style.fontSize)
     this.commitChanges()
     this.RectangleSelector = createNewElement('div')
+    this.RectangleSelector.id = 'selrect'
     this.RectangleSelector.hidden = true
     this.RectangleSelector.style.position = 'absolute'
     this.RectangleSelector.style.border = '1px dashed #6C747680'
@@ -224,8 +221,8 @@ class Editor extends React.Component<EditorProps> {
     const parentNode = node.parentNode!
     const parentName = parentNode.nodeName
 
-    let child: HTMLElement
-    let div: HTMLElement
+    let child: HTMLElement = this.currentChild
+    let div: HTMLElement = this.currentDiv
 
     switch (nodeName) {
       case 'SPAN':
@@ -246,7 +243,6 @@ class Editor extends React.Component<EditorProps> {
         div = (node as HTMLElement).firstElementChild!.firstElementChild!
           .firstElementChild! as HTMLElement
         child = div.firstElementChild! as HTMLElement
-
         break
       case (node as HTMLElement).firstElementChild?.nodeName === 'DIV' && 'DIV':
         div = (node as HTMLElement).firstElementChild! as HTMLElement
@@ -258,6 +254,8 @@ class Editor extends React.Component<EditorProps> {
           .firstElementChild!.firstElementChild! as HTMLElement
         child = div.firstElementChild as HTMLElement
         break
+      default:
+        alert('unimp')
     }
 
     if (parentName === 'TD') {
@@ -626,9 +624,11 @@ class Editor extends React.Component<EditorProps> {
 
     anchorElems !== null && this.setCurrentElements(anchorElems)
 
-    const firstDiv = this.selfRef.current.firstElementChild.nextElementSibling
+    const firstDiv = this.selfRef.current.firstElementChild?.nextElementSibling
     const lastDiv = this.selfRef.current.lastElementChild
     if (
+      firstDiv &&
+      lastDiv &&
       anchorElems &&
       focusElems &&
       !anchorElems[0].isSameNode(focusElems[0])
@@ -1039,12 +1039,13 @@ class Editor extends React.Component<EditorProps> {
     }
 
     if (e.key.length === 1 && !e.ctrlKey && !e.altKey) {
-      this.props.setCaretPos({
-        left:
-          this.props.caretPos.left +
-          (RegExp('[A-Za-z0-9]').test(e.key) ? 4 : 1),
-        top: this.props.caretPos.top
-      })
+      !this.props.disableSmoothCaret &&
+        this.props.setCaretPos({
+          left:
+            this.props.caretPos.left +
+            (RegExp('[A-Za-z0-9]').test(e.key) ? 4 : 1),
+          top: this.props.caretPos.top
+        })
     }
 
     this.lastKeyPressed = e.key
@@ -1105,7 +1106,7 @@ class Editor extends React.Component<EditorProps> {
         }
         break
       }
-      case 'ArrowUp': {
+      case this.selTable && 'ArrowUp': {
         let cellRect = this.currentChild.parentElement!.parentElement!.getBoundingClientRect()
         const prevUpCellTop = cellRect.top
         let prevUpCell: any = document.elementFromPoint(
@@ -1123,7 +1124,7 @@ class Editor extends React.Component<EditorProps> {
         e.preventDefault()
         break
       }
-      case 'ArrowDown': {
+      case this.selTable && 'ArrowDown': {
         let cellRect = this.currentChild.parentElement!.parentElement!.getBoundingClientRect()
         const nextDownCellBottom = cellRect.bottom
         let nextDownCell: any = document.elementFromPoint(
@@ -1143,13 +1144,18 @@ class Editor extends React.Component<EditorProps> {
       case !this.onList &&
         this.currentChild.innerText.length === 1 &&
         this.currentChild.innerText !== '\u200b' &&
+        sel?.anchorOffset === 1 &&
+        sel?.focusOffset === 1 &&
         'Backspace':
         this.currentChild.innerHTML = '\u200b'
-        this.select(this.currentChild.childNodes[0], 1)
-
+        const selChild = this.currentChild.nextElementSibling
+          ? this.currentChild.nextElementSibling
+          : this.currentChild
+        const selOffset = this.currentChild.nextElementSibling ? 0 : 1
+        this.currentChild.nextElementSibling && this.currentChild.remove()
+        this.select(selChild.childNodes[0], selOffset)
         e.preventDefault()
         break
-
       case !this.onList &&
         this.currentChild.innerText === '\u200b' &&
         'Backspace':
@@ -1162,15 +1168,30 @@ class Editor extends React.Component<EditorProps> {
         ) {
           e.preventDefault()
         } else {
-          this.currentChild.remove()
-          this.currentDiv.previousElementSibling!.append('\u200b')
+          const prevChild = this.currentDiv.previousElementSibling!
+            .lastChild! as HTMLElement
+          prevChild.innerText += '\u200b'
+          this.select(prevChild.childNodes[0], prevChild.innerText.length)
+          this.currentDiv.remove()
         }
         break
-
       case this.onList &&
         sel!.anchorOffset == 0 &&
         sel!.focusOffset == 0 &&
         'Backspace':
+        break
+      case !this.onList &&
+        sel!.anchorOffset == 0 &&
+        sel!.focusOffset == 0 &&
+        this.currentDiv.previousElementSibling &&
+        this.currentDiv.previousElementSibling.children.length === 1 &&
+        this.currentDiv.previousElementSibling.children[0].innerHTML ===
+          '\u200b' &&
+        'Backspace':
+        this.currentDiv.previousElementSibling!.remove()
+        e.preventDefault()
+
+        break
       case this.onList &&
         this.currentChild.innerText === '\u200b' &&
         'Backspace':
@@ -1207,7 +1228,8 @@ class Editor extends React.Component<EditorProps> {
 
           this.select(this.currentDiv.children[0].childNodes[0], 0)
           this.update()
-          this.props.setCaretPos(this.getCaretPos())
+          !this.props.disableSmoothCaret &&
+            this.props.setCaretPos(this.getCaretPos())
         }
         e.preventDefault()
         break
@@ -1228,6 +1250,20 @@ class Editor extends React.Component<EditorProps> {
         setTimeout(() => {
           this.lastCombPressed = ''
         }, 400)
+        break
+      case sel?.anchorOffset === 0 &&
+        sel?.focusOffset === 0 &&
+        this.currentChild.innerText.length >= 1 &&
+        'Enter':
+        const div = createNewElement('div')
+        const span = createNewElement('span')
+        span.innerHTML = '\u200b'
+        div.append(span)
+        this.selfRef.current.insertBefore(div, this.currentDiv)
+        e.preventDefault()
+        break
+      case sel?.anchorOffset === 1 && sel?.focusOffset === 1 && 'ArrowRight':
+        this.select(sel!.anchorNode!, 0)
         break
       case 'Enter':
         this.addToHistory()
@@ -1303,6 +1339,7 @@ class Editor extends React.Component<EditorProps> {
         break
       default:
     }
+    this.commitChanges()
   }
 
   onKeyUp = () => {
@@ -1355,7 +1392,7 @@ class Editor extends React.Component<EditorProps> {
         ? this.currentChild.style.fontSize
         : this.currentDiv.style.lineHeight
 
-    this.props.setCaretPos(this.getCaretPos())
+    !this.props.disableSmoothCaret && this.props.setCaretPos(this.getCaretPos())
   }
 
   makeSelectRect = () => {
@@ -1761,7 +1798,8 @@ class Editor extends React.Component<EditorProps> {
       this.props.setIsCaretHidden(true)
       // img.style.float = 'left'
       this.update()
-      this.props.setCaretPos(this.getCaretPos())
+      !this.props.disableSmoothCaret &&
+        this.props.setCaretPos(this.getCaretPos())
 
       ev.preventDefault()
     })
@@ -1827,7 +1865,7 @@ class Editor extends React.Component<EditorProps> {
   deleteSelectedImage = () => {
     this.selImage?.remove()
     this.update()
-    this.props.setCaretPos(this.getCaretPos())
+    !this.props.disableSmoothCaret && this.props.setCaretPos(this.getCaretPos())
 
     this.props.setIsCaretHidden(false)
   }
@@ -1910,6 +1948,22 @@ class Editor extends React.Component<EditorProps> {
     document.body.style.cursor = 'auto'
   }
 
+  getFirstLineText = () => {
+    return this.selfRef.current.children[1].innerText
+  }
+
+  setHTML = (html: string) => {
+    html === '' ? this.init() : (this.selfRef.current.innerHTML = html)
+    this.currentDiv = this.selfRef.current.lastElementChild as HTMLElement
+    this.currentChild = this.currentDiv.lastElementChild as HTMLElement
+    this.commitChanges()
+    this.selfRef.current.focus()
+    this.select(
+      this.currentChild.childNodes[0],
+      this.currentChild.innerText.length
+    )
+  }
+
   render() {
     return (
       <ContentEditable
@@ -1941,7 +1995,7 @@ class Editor extends React.Component<EditorProps> {
         onDragStart={(e: React.DragEvent) => {
           e.preventDefault()
         }}
-        dir='auto'
+        dir={this.props.dir}
         contentEditable
         dangerouslySetInnerHTML={{ __html: this.props.html }}
         caretColor={this.props.caretColor}

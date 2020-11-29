@@ -17,6 +17,7 @@ export default React.memo(
     caretDelay: string
     disableSmoothCaret: boolean
     caretColor: string
+    dir: string
     css: string
   }) => {
     const [isCaretHidden, setIsCaretHidden] = useState(true)
@@ -31,7 +32,6 @@ export default React.memo(
     return (
       <React.Fragment>
         <Editor
-          css={props.css}
           width={props.width}
           height={props.height}
           padding={props.padding}
@@ -53,15 +53,21 @@ export default React.memo(
           fontSizeMenu={FontSizeMenu.getInstance()}
           disableSmoothCaret={props.disableSmoothCaret}
           caretColor={props.caretColor}
+          dir={props.dir}
+          css={props.css}
         />
-        <Caret
-          transitionDelay={caretDelay}
-          height={caretHeight}
-          hidden={isCaretHidden}
-          color={props.disableSmoothCaret ? 'transparent' : props.caretColor}
-          left={caretPosition.left}
-          top={caretPosition.top}
-        />
+        {props.disableSmoothCaret ? (
+          ''
+        ) : (
+          <Caret
+            transitionDelay={caretDelay}
+            height={caretHeight}
+            hidden={isCaretHidden}
+            color={props.disableSmoothCaret ? 'transparent' : props.caretColor}
+            left={caretPosition.left}
+            top={caretPosition.top}
+          />
+        )}
       </React.Fragment>
     )
   }

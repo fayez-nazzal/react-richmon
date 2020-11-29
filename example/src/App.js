@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Richmon } from 'react-richmon'
+import { RichButton, Richmon } from 'react-richmon'
 
 const App = () => {
   const [content, setContent] = useState('')
@@ -24,7 +24,14 @@ const App = () => {
         'thin-seperator',
         'orderedList',
         'unOrderedList',
-        'table'
+        'table',
+        <RichButton
+          action={(actions) => {
+            actions.setEditorContent('')
+          }}
+        >
+          set
+        </RichButton>
       ]}
     />
   )
